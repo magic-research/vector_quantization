@@ -1,0 +1,1 @@
+torchrun --nproc_per_node=8 --master_port=5018 -m vq.train exps_decoder_vqkd_clip_8192_laion_aesthetics_llamagen_cd_1 configs/exps/decoder_vqkd_clip_8192_laion_aesthetics.py --load-model-from work_dirs/vqkd/clip_8192_laion_aesthetics_ddp/checkpoints/iter_250000/model.nd.pth --override .trainer.dataloader.batch_size:128

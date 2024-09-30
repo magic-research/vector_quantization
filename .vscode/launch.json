@@ -1,0 +1,74 @@
+{
+  "configurations": [
+    {
+      "args": [
+        "vqgan_16384_imagenet",
+        "configs/vqgan_16384_imagenet.py"
+      ],
+      "env": {
+        "DRY_RUN": "True"
+      },
+      "module": "vq.train",
+      "name": "VQGAN 16384 ImageNet",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "vqkd_clip_8192_imagenet",
+        "configs/vqkd_clip_8192_imagenet.py"
+      ],
+      "env": {
+        "DRY_RUN": "True"
+      },
+      "module": "vq.train",
+      "name": "VQ-KD CLIP 8192 ImageNet",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "justMyCode": false,
+      "listen": {
+        "host": "0.0.0.0",
+        "port": 5678
+      },
+      "name": "Run VQ-KD CLIP 8192 ImageNet DDP",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "."
+        }
+      ],
+      "preLaunchTask": "VQ-KD CLIP 8192 ImageNet DDP",
+      "request": "attach",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "cvqvae_8192_imagenet",
+        "configs/cvqvae_8192_imagenet.py"
+      ],
+      "env": {
+        "DRY_RUN": "True"
+      },
+      "module": "vq.train",
+      "name": "CVQ-VAE 8192 ImageNet",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "cvqvae_8192_imagenet",
+        "configs/cvqvae_8192_imagenet.py"
+      ],
+      "env": {
+        "DRY_RUN": "True"
+      },
+      "module": "vq.val",
+      "name": "Val CVQ-VAE 8192 ImageNet",
+      "request": "launch",
+      "type": "debugpy"
+    }
+  ],
+  "version": "0.2.0"
+}

@@ -1,0 +1,7 @@
+[flake8]
+ignore = D100,D101,D102,D103,D104,D105,D107,E126,E201,E241,N805,N812,N817,W503,W504
+per-file-ignores =
+    vq/__init__.py:F401,F403
+    vq/**/__init__.py:F401,F403
+max-complexity = 12
+builtins = _kwargs_

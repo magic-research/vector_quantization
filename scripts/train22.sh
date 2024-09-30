@@ -1,0 +1,1 @@
+torchrun --nproc_per_node=8 --master_port=5022 -m vq.train exps_decoder_vqkd_clip_8192_satin_cd configs/exps/decoder_vqkd_clip_8192_satin.py --load-model-from work_dirs/vqkd/clip_8192_satin_ddp/checkpoints/iter_250000/model.nd.pth

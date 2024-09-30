@@ -1,0 +1,35 @@
+{
+  "options": {
+    "env": {
+      "CPU_": "12",
+      "DRY_RUN": "True",
+      "GPU": "2",
+      "MEMORY": "60",
+      "PORT": "5678"
+    }
+  },
+  "tasks": [
+    {
+      "command": "tools/run.sh -m vq.train vqkd_clip_8192_imagenet_ddp configs/vqkd_clip_8192_imagenet_ddp.py",
+      "isBackground": true,
+      "label": "VQ-KD CLIP 8192 ImageNet DDP",
+      "problemMatcher": {
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "."
+        },
+        "pattern": [
+          {
+            "file": 1,
+            "location": 2,
+            "message": 3,
+            "regexp": "File \"(?!\\/)([^\"]+)\", line (\\d+), in (\\w+)"
+          }
+        ]
+      },
+      "type": "shell"
+    }
+  ],
+  "version": "2.0.0"
+}

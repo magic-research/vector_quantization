@@ -1,0 +1,149 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'Vector Quantization'
+version = '0.0.1'
+description = 'Image Understanding Makes for A Good Tokenizer for Image Generation'
+readme = 'README.md'
+requires-python = '>=3.11'
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'License :: OSI Approved :: Apache Software License',
+    'Operating System :: OS Independent',
+]
+dynamic = [
+    'dependencies',
+]
+
+[project.license]
+file = 'LICENSE'
+
+[[project.authors]]
+name = 'Luting Wang'
+email = 'wangluting@buaa.edu.cn'
+
+[project.urls]
+Homepage = 'https://github.com/LutingWang/vector_quantization'
+
+[project.optional-dependencies]
+dev = [
+    'ipdb',
+]
+
+[tool.setuptools.packages.find]
+include = [
+    'vq*',
+]
+
+[tool.setuptools.package-data]
+vq = [
+    'py.typed',
+    '.todd_version',
+]
+
+[tool.autoflake]
+in-place = true
+
+[tool.yapf]
+allow_split_before_dict_value = false
+coalesce_brackets = true
+dedent_closing_brackets = true
+split_arguments_when_comma_terminated = true
+split_complex_comprehension = true
+split_before_arithmetic_operator = true
+
+[tool.isort]
+extra_standard_library = [
+    'typing_extensions',
+]
+profile = 'hug'
+src_paths = [
+    'vq',
+]
+line_length = 79
+multi_line_output = 3
+
+[tool.pydocstyle]
+convention = 'google'
+add-ignore = 'D100,D101,D102,D103,D104,D105,D107'
+
+[tool.mypy]
+files = [
+    'vq',
+]
+plugins = 'numpy.typing.mypy_plugin'
+
+[[tool.mypy.overrides]]
+module = [
+    'mmcv.*',
+    'scipy.*',
+    'setuptools.*',
+    'timm.*',
+    'torchvision.*',
+    'transformers.*',
+]
+ignore_missing_imports = true
+
+[tool.codespell]
+write-changes = true
+ignore-words-list = 'nd'
+
+[tool.commitizen]
+name = 'cz_conventional_commits'
+version = "0.0.1"
+tag_format = 'v$version'
+version_files = [
+    'pyproject.toml:^version',
+    'vq/__init__.py:^__version__',
+]
+
+[tool.pylint.'messages control']
+disable = [
+    'attribute-defined-outside-init',
+    'cyclic-import',
+    'design',
+    'eval-used',
+    'exec-used',
+    'fixme',
+    'missing-module-docstring',
+    'missing-class-docstring',
+    'missing-function-docstring',
+    'not-callable',
+    'protected-access',
+    'unspecified-encoding',
+    'unused-argument',
+    'use-dict-literal',
+    'use-list-literal',
+
+    'duplicate-code',
+    'using-constant-test',
+]
+enable = [
+    'useless-suppression',
+]
+
+[tool.pylint.basic]
+good-names = [
+    'ModuleType',
+]
+
+[tool.pylint.typecheck]
+signature-mutators = [
+    'all_gather_decorator',
+]
+generated-members = [
+    'cv2.*',
+    'torch.*',
+    'Store.PRETRAINED',
+]
+
+[tool.pylint.format]
+expected-line-ending-format = 'LF'
+max-line-length = 79
+
+[tool.bandit]
+skips = [
+    'B101',
+]
