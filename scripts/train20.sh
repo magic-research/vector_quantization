@@ -1,1 +1,0 @@
-torchrun --nproc_per_node=8 --master_port=5020 -m vq.train exps_decoder_vqkd_clip_8192_sa_med2d_cd configs/exps/decoder_vqkd_clip_8192_sa_med2d.py --load-model-from work_dirs/vqkd/clip_8192_sa_med2d_ddp/checkpoints/iter_250000/model.nd.pth

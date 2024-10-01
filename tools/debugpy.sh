@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!bash
 ssh -fN -L ${PORT}:localhost:${PORT} -p 9000 root@$1
 pipenv run python \
     -m debugpy \

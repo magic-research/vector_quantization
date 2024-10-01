@@ -11,6 +11,9 @@ import todd
 import torch
 from todd.patches.py import get_
 
+GITHUB = 'https://github.com/'
+# GITHUB = 'https://github.moeyy.xyz/https://github.com/'
+
 
 def load_state_dict_from_url(url: str, state_dict: pathlib.Path) -> None:
     if state_dict.exists():
@@ -51,17 +54,17 @@ def beitv2(args: argparse.Namespace) -> None:
     root.mkdir(parents=True, exist_ok=True)
 
     load_state_dict_from_url(
-        'https://github.com/addf400/files/releases/download/BEiT-v2/'
+        f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_1x768x12_clip-d93179da.pth',
         root / 'vqkd_encoder_base_decoder_1x768x12_clip.pth',
     )
     load_state_dict_from_url(
-        'https://github.com/addf400/files/releases/download/BEiT-v2/'
+        f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_3x768x12_clip-d5036aa7.pth',
         root / 'vqkd_encoder_base_decoder_3x768x12_clip.pth',
     )
     load_state_dict_from_url(
-        'https://github.com/addf400/files/releases/download/BEiT-v2/'
+        f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_1x768x12_dino-663c55d7.pth',
         root / 'vqkd_encoder_base_decoder_1x768x12_dino.pth',
     )
@@ -93,7 +96,7 @@ def pytorch_fid(args: argparse.Namespace) -> None:
     root.mkdir(parents=True, exist_ok=True)
 
     load_state_dict_from_url(
-        'https://github.com/mseitzer/pytorch-fid/releases/download/'
+        f'{GITHUB}mseitzer/pytorch-fid/releases/download/'
         'fid_weights/pt_inception-2015-12-05-6726825d.pth',
         root / 'pt_inception.pth',
     )
@@ -129,14 +132,14 @@ def torchvision(args: argparse.Namespace) -> None:
 
     for w in args.weights:
         weights: models.WeightsEnum = get_(models, w)
-        weights.get_state_dict(True)
+        weights.get_state_dict()
 
 
 def inception(args: argparse.Namespace) -> None:
     # Inception weights ported to Pytorch from
     # http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
     torch.hub.load_state_dict_from_url(
-        'https://github.com/toshas/torch-fidelity/releases/download/v0.2.0/'
+        f'{GITHUB}toshas/torch-fidelity/releases/download/v0.2.0/'
         'weights-inception-2015-12-05-6726825d.pth',
     )
 

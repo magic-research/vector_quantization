@@ -9,6 +9,9 @@
 ## Preparation
 
 ```bash
+pipenv run python tools/prepare_checkpoints.py pytorch_fid
+pipenv run python tools/prepare_checkpoints.py lpips
+pipenv run python tools/prepare_checkpoints.py inception
 pipenv run python tools/prepare_checkpoints.py torchvision
 pipenv run python tools/prepare_checkpoints.py beitv2
 ```
@@ -19,8 +22,9 @@ pipenv run python tools/convert_checkpoints.py beitv2 pretrained/beitv2/vqkd_enc
 ```
 
 ```bash
-run -- bash tools/torchrun.sh -m vq.fid imagenet
-run -- bash tools/torchrun.sh -m vq.fid imagenet --train --override .dataloader.batch_size:1024
+mkdir -p pretrained/fid
+pipenv run bash tools/torchrun.sh -m vq.fid imagenet
+pipenv run bash tools/torchrun.sh -m vq.fid imagenet --train --override .dataloader.batch_size:1024
 ```
 
 ## Training

@@ -1,4 +1,4 @@
-SHELL := /usr/bin/env zsh
+SHELL := zsh
 
 current_todd_version := $$(cat .todd_version)
 latest_todd_version := $(shell curl -H "Accept: application/vnd.github.sha" -s https://api.github.com/repos/LutingWang/todd/commits/main)

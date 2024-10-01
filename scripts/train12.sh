@@ -1,1 +1,0 @@
-bash tools/torchrun.sh -m vq.train exps_decoder_vqkd_clip_8192_imagenet_ddp_nokmeans_llamagen_cd configs/exps/decoder_vqkd_clip_8192_imagenet_ddp_nokmeans_llamagen_cd.py --load-model-from work_dirs/exps_vqkd_clip_8192_imagenet_ddp_nokmeans_fix/checkpoints/iter_250000/model.pth
