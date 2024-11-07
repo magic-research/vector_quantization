@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import einops
 import torch
-from todd.patches.py import get_
+from todd.patches.py_ import get_
 from todd.runners import Memo
 from todd.runners.metrics import LossMetric
 from torch import nn

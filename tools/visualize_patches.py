@@ -13,7 +13,7 @@ import tqdm
 from todd.configs import PyConfig
 from todd.datasets.access_layers import PthAccessLayer
 from todd.patches.pil import convert_rgb
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.registries import DatasetRegistry
 from torch import nn
 

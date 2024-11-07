@@ -9,7 +9,7 @@ from typing import TypeVar, cast
 
 import torch
 import torch.distributed as dist
-from todd.patches.py import get_
+from todd.patches.py_ import get_
 from todd.runners import Memo
 from todd.runners.metrics import BaseMetric
 from torch import nn

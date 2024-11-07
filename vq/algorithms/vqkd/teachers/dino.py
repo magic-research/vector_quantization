@@ -5,7 +5,7 @@ __all__ = [
 import todd
 import torch
 from todd.bases.registries import Item
-from todd.models import DINO
+from todd.models.modules import DINO
 from todd.registries import InitWeightsMixin
 
 from vq.utils import Store

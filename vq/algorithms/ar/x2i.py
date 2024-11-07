@@ -33,7 +33,11 @@ class X2IMixin(ImageMixin[T], X2I[T]):
         codebook: lmm.Codebook[T] = memo['codebook']
 
         logits = logits[:, start - 1:-1]
-        image_tokens = self._transformer.sample(logits, codebook)
+        image_tokens, memo['transformer'] = self._transformer.sample(
+            logits, 
+            codebook, 
+            get_memo(memo, 'transformer'),
+        )
         image_tokens = codebook.debias(image_tokens)
         memo['image_tokens'] = image_tokens
 

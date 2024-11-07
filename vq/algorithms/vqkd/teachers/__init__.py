@@ -2,8 +2,6 @@ from .base import *
 from .clip import *
 from .convnext import *
 from .dino import *
-from .evaclip import *
 from .mae import *
-from .openclip import *
 from .torchvision import *
 from .vit import *

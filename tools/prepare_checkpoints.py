@@ -9,7 +9,7 @@ import unittest.mock
 
 import todd
 import torch
-from todd.patches.py import get_
+from todd.patches.py_ import get_
 
 GITHUB = 'https://github.com/'
 # GITHUB = 'https://github.moeyy.xyz/https://github.com/'

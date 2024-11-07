@@ -5,7 +5,7 @@ __all__ = [
 from typing import TypeVar
 
 import todd.tasks.image_generation as ig
-from todd.patches.py import get_
+from todd.patches.py_ import get_
 from todd.patches.torch import load
 from todd.runners import Memo
 from todd.runners.metrics import BaseMetric

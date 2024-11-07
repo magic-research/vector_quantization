@@ -5,7 +5,7 @@ __all__ = [
 from typing import TypeVar
 
 import torch
-from todd.patches.py import get_
+from todd.patches.py_ import get_
 from todd.runners import Memo
 from todd.runners.metrics import Metric
 from torch import nn

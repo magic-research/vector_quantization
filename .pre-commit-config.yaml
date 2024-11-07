@@ -27,7 +27,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-toml
       - id: check-vcs-permalinks
-      - id: check-merge-conflict
       - id: check-yaml
       - id: debug-statements
       - id: destroyed-symlinks
@@ -55,6 +54,7 @@ repos:
           - numpy
           - pandas-stubs
           - types-Pillow
+          - types-requests
           - types-toml
           - git+https://github.com/LutingWang/todd.git@e8fe332
   - repo: https://github.com/codespell-project/codespell

@@ -45,7 +45,7 @@ class ComposedConnector(BuildPreHookMixin, BaseConnector):
             in_channels = connector.out_channels
             connectors.append(connector)
 
-        config.connectors = Sequential(*connectors)
+        config.connectors = Sequential(*connectors, unpack_args=True)
         return config
 
     @classmethod

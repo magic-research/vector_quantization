@@ -5,12 +5,13 @@ import re
 import sys
 import unittest.mock
 from abc import ABC, abstractmethod
+from typing import cast
 
 import einops
 import todd
 import torch
 from todd.configs import PyConfig
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.registries import ModelRegistry
 from torch import nn
 
@@ -19,14 +20,13 @@ StateDict = dict[str, torch.Tensor]
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Convert Checkpoints')
-    parser.add_argument('--options', type=DictAction, default=dict())
-    parser.add_argument('--check')
-    parser.add_argument('--suffix', default='.converted')
-
     sub_parsers = parser.add_subparsers()
     for k, v in ConverterRegistry.items():
         sub_parser = sub_parsers.add_parser(k)
         sub_parser.add_argument('path', type=pathlib.Path)
+        sub_parser.add_argument('--options', action=DictAction, default=dict())
+        sub_parser.add_argument('--check')
+        sub_parser.add_argument('--suffix', default='.converted')
         sub_parser.set_defaults(type=v)
     args = parser.parse_args()
     return args
@@ -265,6 +265,10 @@ class BEiTv2Converter(BaseConverter):
     def __init__(self, with_decoder: bool) -> None:
         self._with_decoder = with_decoder
 
+    def load(self, path: pathlib.Path) -> StateDict:
+        state_dict = super().load(path)
+        return cast(StateDict, state_dict['model'])
+
     def _convert_quantizer(self, key: str) -> str:
         if key.startswith('embedding.'):
             key = '_' + key
@@ -340,9 +344,9 @@ def main() -> None:
         config = PyConfig.load(args.check)
         for custom_import in config.custom_imports:
             importlib.import_module(custom_import)
-        config = config.trainer.strategy.model
+        config = config.trainer.model
         model: nn.Module = ModelRegistry.build(config)
-        model.load_state_dict(state_dict)
+        model.load_state_dict(converted_state_dict)
 
     torch.save(converted_state_dict, str(args.path) + args.suffix)
 
