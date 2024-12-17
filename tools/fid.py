@@ -4,7 +4,7 @@ import pathlib
 
 import todd.tasks.image_generation as ig
 from todd.configs import PyConfig
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.patches.torch import get_rank, load
 from todd.registries import RunnerRegistry
 from torch import nn

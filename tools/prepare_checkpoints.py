@@ -5,6 +5,7 @@ import os
 import pathlib
 import subprocess  # nosec B404
 import sys
+from typing import Any, Callable
 import unittest.mock
 
 import todd
@@ -15,15 +16,15 @@ GITHUB = 'https://github.com/'
 # GITHUB = 'https://github.moeyy.xyz/https://github.com/'
 
 
-def load_state_dict_from_url(url: str, state_dict: pathlib.Path) -> None:
-    if state_dict.exists():
+def download_state_dict(url: str, path: pathlib.Path) -> None:
+    if path.exists():
         return
-    todd.logger.info("downloading %s to %s", url, state_dict)
+    todd.logger.info("downloading %s to %s", url, path)
     torch.hub.load_state_dict_from_url(
         url,
-        str(state_dict.parent),
+        str(path.parent),
         'cpu',
-        file_name=state_dict.name,
+        file_name=path.name,
     )
 
 
@@ -37,12 +38,12 @@ def taming_transformers(args: argparse.Namespace) -> None:
     root.mkdir(parents=True, exist_ok=True)
 
     # https://colab.research.google.com/drive/1_JqtXRpm25dlGYM7VXvBehyJE5X8xptP?usp=sharing
-    load_state_dict_from_url(
+    download_state_dict(
         'https://heibox.uni-heidelberg.de/d/8088892a516d4e3baf92/files/'
         '?p=%2Fckpts%2Flast.ckpt&dl=1',
         root / 'vqgan_imagenet_f16_1024.pth',
     )
-    load_state_dict_from_url(
+    download_state_dict(
         'https://heibox.uni-heidelberg.de/d/a7530b09fed84f80a887/files/'
         '?p=/ckpts/last.ckpt&dl=1',
         root / 'vqgan_imagenet_f16_16384.pth',
@@ -53,17 +54,17 @@ def beitv2(args: argparse.Namespace) -> None:
     root: pathlib.Path = args.root / 'beitv2'
     root.mkdir(parents=True, exist_ok=True)
 
-    load_state_dict_from_url(
+    download_state_dict(
         f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_1x768x12_clip-d93179da.pth',
         root / 'vqkd_encoder_base_decoder_1x768x12_clip.pth',
     )
-    load_state_dict_from_url(
+    download_state_dict(
         f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_3x768x12_clip-d5036aa7.pth',
         root / 'vqkd_encoder_base_decoder_3x768x12_clip.pth',
     )
-    load_state_dict_from_url(
+    download_state_dict(
         f'{GITHUB}addf400/files/releases/download/BEiT-v2/'
         'vqkd_encoder_base_decoder_1x768x12_dino-663c55d7.pth',
         root / 'vqkd_encoder_base_decoder_1x768x12_dino.pth',
@@ -74,7 +75,7 @@ def dino(args: argparse.Namespace) -> None:
     root: pathlib.Path = args.root / 'dino'
     root.mkdir(parents=True, exist_ok=True)
 
-    load_state_dict_from_url(
+    download_state_dict(
         'https://dl.fbaipublicfiles.com/dino/dino_vitbase16_pretrain/'
         'dino_vitbase16_pretrain.pth',
         root / 'vitbase16.pth',
@@ -85,7 +86,7 @@ def lpips(args: argparse.Namespace) -> None:
     root: pathlib.Path = args.root / 'lpips'
     root.mkdir(parents=True, exist_ok=True)
 
-    load_state_dict_from_url(
+    download_state_dict(
         'https://heibox.uni-heidelberg.de/f/607503859c864bc1b30b/?dl=1',
         root / 'vgg.pth',
     )
@@ -95,7 +96,7 @@ def pytorch_fid(args: argparse.Namespace) -> None:
     root: pathlib.Path = args.root / 'pytorch-fid'
     root.mkdir(parents=True, exist_ok=True)
 
-    load_state_dict_from_url(
+    download_state_dict(
         f'{GITHUB}mseitzer/pytorch-fid/releases/download/'
         'fid_weights/pt_inception-2015-12-05-6726825d.pth',
         root / 'pt_inception.pth',
@@ -106,7 +107,7 @@ def mae(args: argparse.Namespace) -> None:
     root: pathlib.Path = args.root / 'mae'
     root.mkdir(parents=True, exist_ok=True)
 
-    load_state_dict_from_url(
+    download_state_dict(
         'https://dl.fbaipublicfiles.com/mae/pretrain/'
         'mae_pretrain_vit_base.pth',
         root / 'mae_pretrain_vit_base.pth',
@@ -186,27 +187,19 @@ def parse_args() -> argparse.Namespace:
 
     subparsers = parser.add_subparsers()
 
-    parser_taming_transformers = subparsers.add_parser(
-        taming_transformers.__name__,
-    )
-    parser_taming_transformers.set_defaults(func=taming_transformers)
+    def add_parser(f: Callable[..., Any]) -> argparse.ArgumentParser:
+        subparser = subparsers.add_parser(f.__name__)
+        subparser.set_defaults(func=f)
+        return subparser
 
-    parser_beitv2 = subparsers.add_parser(beitv2.__name__)
-    parser_beitv2.set_defaults(func=beitv2)
+    add_parser(taming_transformers)
+    add_parser(beitv2)
+    add_parser(dino)
+    add_parser(lpips)
+    add_parser(pytorch_fid)
+    add_parser(mae)
 
-    parser_dino = subparsers.add_parser(dino.__name__)
-    parser_dino.set_defaults(func=dino)
-
-    parser_lpips = subparsers.add_parser(lpips.__name__)
-    parser_lpips.set_defaults(func=lpips)
-
-    parser_pytorch_fid = subparsers.add_parser(pytorch_fid.__name__)
-    parser_pytorch_fid.set_defaults(func=pytorch_fid)
-
-    parser_mae = subparsers.add_parser(mae.__name__)
-    parser_mae.set_defaults(func=mae)
-
-    parser_clip = subparsers.add_parser(clip.__name__)
+    parser_clip = add_parser(clip)
     parser_clip.add_argument(
         '--weights',
         nargs='+',
@@ -216,9 +209,8 @@ def parse_args() -> argparse.Namespace:
             'ViT-L/14',
         ],
     )
-    parser_clip.set_defaults(func=clip)
 
-    parser_torchvision = subparsers.add_parser(torchvision.__name__)
+    parser_torchvision = add_parser(torchvision)
     parser_torchvision.add_argument(
         '--weights',
         nargs='+',
@@ -230,12 +222,10 @@ def parse_args() -> argparse.Namespace:
             # '.ConvNeXt_Base_Weights.DEFAULT',
         ],
     )
-    parser_torchvision.set_defaults(func=torchvision)
 
-    parser_inception = subparsers.add_parser(inception.__name__)
-    parser_inception.set_defaults(func=inception)
+    add_parser(inception)
 
-    parser_huggingface = subparsers.add_parser(huggingface.__name__)
+    parser_huggingface = add_parser(huggingface)
     parser_huggingface.add_argument(
         '--weights',
         nargs='+',
@@ -243,7 +233,6 @@ def parse_args() -> argparse.Namespace:
             'gpt2-medium',
         ],
     )
-    parser_huggingface.set_defaults(func=huggingface)
 
     args = parser.parse_args()
     return args

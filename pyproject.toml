@@ -3,7 +3,7 @@ requires = ['setuptools']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'Vector Quantization'
+name = 'vq'
 version = '0.0.1'
 description = 'Image Understanding Makes for A Good Tokenizer for Image Generation'
 readme = 'README.md'
@@ -82,6 +82,7 @@ module = [
     'setuptools.*',
     'timm.*',
     'torchvision.*',
+    'torch_fidelity.*',
     'transformers.*',
 ]
 ignore_missing_imports = true

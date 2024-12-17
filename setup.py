@@ -8,7 +8,8 @@ def todd_ai() -> str:
     path = path.parent / '.todd_version'
     todd_version = path.read_text().strip()
     return (
-        f'todd_ai[optional,dev,lint,doc,test] @ git+https://github.com/LutingWang/todd.git@{todd_version}'
+        'todd_ai[optional,dev,lint,doc,test] @ '
+        f'git+https://github.com/LutingWang/todd.git@{todd_version}'
     )
 
 
@@ -34,12 +35,13 @@ setup(
     install_requires=[
         'accelerate',
         'debugpy',
-        # 'open_clip_torch',
         'protobuf<=3.20.1',
-        # 'pycocotools',
         'scikit-image',
         'torch_fidelity',
         'transformers==4.35.2',
+        'openmim',
+        'lvis @ git+https://github.com/lvis-dataset/lvis-api.git@'
+        'lvis_challenge_2021',
         todd_ai(),
     ],
 )

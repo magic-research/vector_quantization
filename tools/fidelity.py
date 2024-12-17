@@ -8,7 +8,7 @@ import torch
 import torch.utils.data
 import torch_fidelity
 from todd.configs import PyConfig
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.registries import DatasetRegistry
 
 import vq

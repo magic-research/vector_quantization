@@ -19,9 +19,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--config-options', action=DictAction, default=dict())
     parser.add_argument('--override', action=DictAction, default=dict())
     parser.add_argument('--seed', type=int, default=3407)
+    parser.add_argument('--autocast', action='store_true')
     parser.add_argument('--load-model-from', nargs='+', default=[])
     parser.add_argument('--load-from')
-    parser.add_argument('--autocast', action='store_true')
     parser.add_argument('--auto-resume', action='store_true')
     args = parser.parse_args()
     return args
