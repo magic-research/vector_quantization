@@ -17,7 +17,7 @@ from vq.datasets import Batch
 from vq.runners import BaseMixin as BaseRunnerMixin
 from vq.tasks.image_reconstruction import BaseModel as BaseIRModel
 from vq.tasks.image_reconstruction import VQIRLossRegistry
-from vq.utils import build_module_dict
+from vq.utils import build_module_dict, get_memo
 
 from .discriminators import BaseDiscriminator
 from .losses import (
@@ -222,6 +222,8 @@ class VQGAN(BaseIRModel):
             image = image.cuda()
         memo.update(original_image=original_image, image=image)
 
+        encoder_memo = get_memo(memo, 'encoder')
+        encoder_memo['original_image'] = original_image
         x, memo = self.encode(image, memo)
         memo['x'] = x
 

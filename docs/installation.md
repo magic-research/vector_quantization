@@ -2,7 +2,7 @@
 
 This repository requires **Python 3.11** or higher. While PyTorch 2.4 is recommended, earlier versions may also be compatible. Ensure that you also install a matching version of TorchVision.
 
-Install the primary dependencies using the following commands:
+After installing `torch` and `torchvision`, use the following command to install the remaining dependencies:
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 pip install -e .

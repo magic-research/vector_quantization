@@ -4,85 +4,45 @@ import pathlib
 import re
 import sys
 import unittest.mock
-from abc import ABC, abstractmethod
 from typing import cast
 
 import einops
-import todd
 import torch
 from todd.configs import PyConfig
-from todd.patches.py_ import DictAction
+from todd.patches.torch import load_state_dict_
 from todd.registries import ModelRegistry
+from todd.utils import StateDict, StateDictConverter
 from torch import nn
-
-StateDict = dict[str, torch.Tensor]
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='Convert Checkpoints')
-    sub_parsers = parser.add_subparsers()
-    for k, v in ConverterRegistry.items():
-        sub_parser = sub_parsers.add_parser(k)
-        sub_parser.add_argument('path', type=pathlib.Path)
-        sub_parser.add_argument('--options', action=DictAction, default=dict())
-        sub_parser.add_argument('--check')
-        sub_parser.add_argument('--suffix', default='.converted')
-        sub_parser.set_defaults(type=v)
-    args = parser.parse_args()
-    return args
+from torchvision import models
 
 
-class ConverterRegistry(todd.Registry):
-    pass
+class BaseStateDictConverter(StateDictConverter):
+
+    def __init__(self, args: argparse.Namespace) -> None:
+        self._args = args
 
 
-class BaseConverter(ABC):
+class LPIPSConverter(BaseStateDictConverter):
 
-    def load(self, path: pathlib.Path) -> StateDict:
-        return torch.load(path, 'cpu')
-
-    @abstractmethod
-    def convert(self, key: str) -> str | None:
-        pass
-
-    def fix_incompatible_keys(self, state_dict: StateDict) -> StateDict:
-        return state_dict
-
-
-@ConverterRegistry.register_('lpips')
-class LPIPSConverter(BaseConverter):
-
-    def convert(self, key: str) -> str | None:
-        pattern = re.compile('^lin([01234]).model.1.weight$')
+    def _convert(self, key: str) -> str | None:
+        pattern = re.compile(r'^lin([0-4]).model.1.weight$')
         match = pattern.match(key)
         if match:
             return f'{match.group(1)}.weight'
         return None
 
 
-@ConverterRegistry.register_('taming')
-class TamingTransformersConverter(BaseConverter):
+class TamingTransformersConverter(BaseStateDictConverter):
 
-    def _merge_attention(self, state_dict: StateDict, prefix: str) -> None:
-        norm_keys = ['norm.weight', 'norm.bias']
-        norms = {k: state_dict.pop(prefix + k) for k in norm_keys}
+    def load(self, *args, **kwargs) -> StateDict:
+        # Mock pytorch_lightning to load the checkpoint
+        sys.modules['pytorch_lightning'] = unittest.mock.Mock()
+        sys.modules['pytorch_lightning.callbacks.model_checkpoint'] = \
+            unittest.mock.Mock()
+        checkpoint = super().load(*args, **kwargs)
+        return cast(StateDict, checkpoint['state_dict'])
 
-        weight_keys = ['q.weight', 'k.weight', 'v.weight', 'proj_out.weight']
-        weights = [state_dict.pop(prefix + k) for k in weight_keys]
-        weights = [einops.rearrange(w, 'oc ic 1 1 -> oc ic') for w in weights]
-
-        bias_keys = ['q.bias', 'k.bias', 'v.bias', 'proj_out.bias']
-        biases = [state_dict.pop(prefix + k) for k in bias_keys]
-
-        state_dict.update((f'{prefix}_group_{k}', v) for k, v in norms.items())
-
-        mha_prefix = prefix + '_multihead_attention.'
-        state_dict[f'{mha_prefix}in_proj_weight'] = torch.cat(weights[:-1])
-        state_dict[f'{mha_prefix}out_proj.weight'] = weights[-1]
-        state_dict[f'{mha_prefix}in_proj_bias'] = torch.cat(biases[:-1])
-        state_dict[f'{mha_prefix}out_proj.bias'] = biases[-1]
-
-    def _merge_attentions(self, state_dict: StateDict) -> None:
+    def _pre_convert(self, state_dict: StateDict) -> StateDict:
         for prefix in [
             'encoder.down.4.attn.0.',
             'encoder.down.4.attn.1.',
@@ -92,16 +52,29 @@ class TamingTransformersConverter(BaseConverter):
             'decoder.up.4.attn.2.',
             'decoder.mid.attn_1.',
         ]:
-            self._merge_attention(state_dict, prefix)
+            norm_keys = ['norm.weight', 'norm.bias']
+            norms = {k: state_dict.pop(prefix + k) for k in norm_keys}
 
-    def load(self, path: pathlib.Path) -> StateDict:
-        # Mock pytorch_lightning to load the checkpoint
-        sys.modules['pytorch_lightning'] = unittest.mock.Mock()
-        sys.modules['pytorch_lightning.callbacks.model_checkpoint'] = \
-            unittest.mock.Mock()
-        checkpoint = torch.load(path, 'cpu')
-        state_dict = checkpoint['state_dict']
-        self._merge_attentions(state_dict)
+            weight_keys = [
+                'q.weight', 'k.weight', 'v.weight', 'proj_out.weight'
+            ]
+            weights = [state_dict.pop(prefix + k) for k in weight_keys]
+            weights = [
+                einops.rearrange(w, 'oc ic 1 1 -> oc ic') for w in weights
+            ]
+
+            bias_keys = ['q.bias', 'k.bias', 'v.bias', 'proj_out.bias']
+            biases = [state_dict.pop(prefix + k) for k in bias_keys]
+
+            state_dict.update((f'{prefix}_group_{k}', v)
+                              for k, v in norms.items())
+
+            mha_prefix = prefix + '_multihead_attention.'
+            state_dict[f'{mha_prefix}in_proj_weight'] = torch.cat(weights[:-1])
+            state_dict[f'{mha_prefix}out_proj.weight'] = weights[-1]
+            state_dict[f'{mha_prefix}in_proj_bias'] = torch.cat(biases[:-1])
+            state_dict[f'{mha_prefix}out_proj.bias'] = biases[-1]
+
         return state_dict
 
     def _convert_residual(self, key: str) -> str:
@@ -211,13 +184,12 @@ class TamingTransformersConverter(BaseConverter):
             raise ValueError(key)
         return '_decoder.' + key
 
-    def _convert_loss(self, key: str) -> str:
+    def _convert_loss(self, key: str) -> str | None:
         if key.startswith('perceptual_loss.'):
-            key = key.removeprefix('perceptual_loss.')
-            return '_reconstruct_losses.lpips_r_loss._lpips.' + key
+            return None
         if key.startswith('discriminator.main.'):
             key = key.removeprefix('discriminator.main.')
-            return '_discriminator.' + key
+            return '_discriminator._discriminator.' + key
         raise ValueError(key)
 
     def _convert_quantizer(self, key: str) -> str:
@@ -226,7 +198,7 @@ class TamingTransformersConverter(BaseConverter):
             key = '_embedding.' + key
         return '_quantizer.' + key
 
-    def convert(self, key: str) -> str | None:
+    def _convert(self, key: str) -> str | None:
         if key.startswith('encoder.'):
             key = key.removeprefix('encoder.')
             return self._convert_encoder(key)
@@ -247,27 +219,49 @@ class TamingTransformersConverter(BaseConverter):
             return self._convert_loss(key)
         return key
 
-    def fix_incompatible_keys(self, state_dict: StateDict) -> StateDict:
+    def _post_convert(self, state_dict: StateDict) -> StateDict:
+        vgg_state_dict = models.VGG16_Weights.IMAGENET1K_V1.get_state_dict()
+        state_dict.update({
+            f'_r_losses.lpips_r_loss._vgg.{k}': v
+            for k, v in vgg_state_dict.items()
+        })
+
+        lpips_state_dict = load_state_dict_(
+            'pretrained/lpips/vgg.pth.converted',
+        )
+        state_dict.update({
+            f'_r_losses.lpips_r_loss._convs.{k}': v
+            for k, v in lpips_state_dict.items()
+        })
+
         tensor = torch.tensor(1)
         state_dict.update({
-            '_quant_loss._weight._steps': tensor,
-            '_reconstruct_losses.l1_reconstruct_loss._weight._steps': tensor,
-            '_reconstruct_losses.lpips_r_loss._weight._steps': tensor,
-            '_generator_loss._weight._steps': tensor,
-            '_discriminator_loss._weight._steps': tensor,
+            '_quantizer._losses.vqgan_loss._weight._steps': tensor,
+            '_quantizer._losses.vqgan_loss._codebook._weight._steps': tensor,
+            '_quantizer._losses.vqgan_loss._codebook._mse._weight._steps': tensor,
+            '_quantizer._losses.vqgan_loss._commitment._weight._steps': tensor,
+            '_quantizer._losses.vqgan_loss._commitment._mse._weight._steps': tensor,
+            '_r_losses.l1_r_loss._weight._steps': tensor,
+            '_r_losses.l1_r_loss._l1._weight._steps': tensor,
+            '_r_losses.lpips_r_loss._weight._steps': tensor,
+            '_g_loss._weight._steps': tensor,
+            '_d_loss._weight._steps': tensor,
         })
+
+        tensor = torch.empty(1, 3, 1, 1)
+        state_dict.update({
+            '_r_losses.lpips_r_loss._mean': tensor,
+            '_r_losses.lpips_r_loss._std': tensor,
+        })
+
         return state_dict
 
 
-@ConverterRegistry.register_('beitv2')
-class BEiTv2Converter(BaseConverter):
+class BEiTv2Converter(BaseStateDictConverter):
 
-    def __init__(self, with_decoder: bool) -> None:
-        self._with_decoder = with_decoder
-
-    def load(self, path: pathlib.Path) -> StateDict:
-        state_dict = super().load(path)
-        return cast(StateDict, state_dict['model'])
+    def load(self, *args, **kwargs) -> StateDict:
+        checkpoint = super().load(*args, **kwargs)
+        return cast(StateDict, checkpoint['model'])
 
     def _convert_quantizer(self, key: str) -> str:
         if key.startswith('embedding.'):
@@ -280,11 +274,11 @@ class BEiTv2Converter(BaseConverter):
         return '_encoder.task_layer.' + key
 
     def _convert_decoder_task_layer(self, key: str) -> str:
-        if not self._with_decoder:
+        if not self._args.with_decoder:
             return ''
         return '_decoder.task_layer.' + key
 
-    def convert(self, key: str) -> str | None:
+    def _convert(self, key: str) -> str | None:
         if key.startswith('encoder.'):
             return '_' + key
         if key.startswith('encode_task_layer.'):
@@ -300,11 +294,11 @@ class BEiTv2Converter(BaseConverter):
             key = key.removeprefix('decode_task_layer.')
             return self._convert_decoder_task_layer(key)
         if key.startswith('decoder_norm.'):
-            if self._with_decoder:
+            if self._args.with_decoder:
                 return '_decoder.' + key
             return None
         if key.startswith('decoder.'):
-            if self._with_decoder:
+            if self._args.with_decoder:
                 return '_' + key
             return None
         if key.startswith('scaling_layer.'):
@@ -313,32 +307,59 @@ class BEiTv2Converter(BaseConverter):
             return None
         raise ValueError(f"Unknown key: {key}")
 
-    def fix_incompatible_keys(self, state_dict: StateDict) -> StateDict:
+    def _post_convert(self, state_dict: StateDict) -> StateDict:
+        for k in [
+            '_quantizer.cluster_size',
+            '_quantizer._embedding.cluster_size',
+            '_quantizer._embedding.embed_avg',
+            '_quantizer._embedding.initted',
+        ]:
+            state_dict.pop(k)
+
         tensor = torch.tensor(1)
         state_dict.update({
-            '_quantizer._losses.mse_q_loss._weight._steps': tensor,
-            '_quantizer._losses.mse_q_loss._mse._weight._steps': tensor,
+            '_quantizer._losses.commitment_loss._weight._steps': tensor,
+            '_quantizer._losses.commitment_loss._mse._weight._steps': tensor,
             '_distiller._losses.0.0._weight._steps': tensor,
             '_distiller._losses.0.0._cosine_embedding._weight._steps': tensor,
         })
         return state_dict
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Convert Checkpoints')
+    sub_parsers = parser.add_subparsers()
+
+    def add_parser(name: str, type_: type) -> argparse.ArgumentParser:
+        sub_parser = sub_parsers.add_parser(name)
+        sub_parser.add_argument('path', type=pathlib.Path)
+        sub_parser.add_argument('--check')
+        sub_parser.add_argument('--suffix', default='.converted')
+        sub_parser.set_defaults(type_=type_)
+        return sub_parser
+
+    add_parser('lpips', LPIPSConverter)
+
+    add_parser('taming_transformers', TamingTransformersConverter)
+
+    parser_beitv2 = add_parser('beitv2', BEiTv2Converter)
+    parser_beitv2.add_argument(
+        '--with-decoder',
+        action='store_true',
+        default=False,
+    )
+
+    args = parser.parse_args()
+    return args
+
+
 def main() -> None:
     args = parse_args()
 
-    converter: BaseConverter = args.type(**args.options)
+    converter: StateDictConverter = args.type_(args)
 
     state_dict = converter.load(args.path)
-
-    converted_state_dict: StateDict = dict()
-    for k, v in state_dict.items():
-        if (converted_k := converter.convert(k)) is not None:
-            converted_state_dict[converted_k] = v
-
-    converted_state_dict = converter.fix_incompatible_keys(
-        converted_state_dict,
-    )
+    state_dict = converter.convert(state_dict)
 
     if args.check is not None:
         config = PyConfig.load(args.check)
@@ -346,9 +367,9 @@ def main() -> None:
             importlib.import_module(custom_import)
         config = config.trainer.model
         model: nn.Module = ModelRegistry.build(config)
-        model.load_state_dict(converted_state_dict)
+        model.load_state_dict(state_dict)
 
-    torch.save(converted_state_dict, str(args.path) + args.suffix)
+    torch.save(state_dict, str(args.path) + args.suffix)
 
 
 if __name__ == '__main__':

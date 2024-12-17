@@ -39,16 +39,16 @@ All other arguments are optional:
   - `--load-from work_dirs/${EXPERIMENT_NAME}/checkpoints/iter_${n}` resumes training from iteration `n`.
   - `--auto-resume` automatically resumes training from the latest checkpoint.
 
-> If a training script uses `--load-model-from` and needs to be resumed via either `--load-from` or `--auto-resume`, the override `--override .trainer.callbacks[-1].load_state_dict:dict\(strict=False\)` should be specified.
+> If a training script uses `--load-model-from` and either `--load-from` or `--auto-resume`, the override `--override .trainer.callbacks[-1].load_state_dict:dict\(strict=False\)` should be specified.
 
 This project adopts a two-stage framework:
 
 - Tokenizers encodes images into tokens. Decoders are included for reconstructing images from tokens.
-  - [VQGAN](configs/vqgan/README.md)
-  - [CVQ-VAE](configs/cvqvae/README.md)
-  - [FSQ](configs/fsq/README.md)
-  - [VQ-KD](configs/vqkd/README.md)
-  - [Cluster](configs/cluster/README.md)
-  - [decoder](configs/decoder/README.md) for both VQ-KD and Cluster
+  - [VQGAN](../configs/vqgan/README.md)
+  - [CVQ-VAE](../configs/cvqvae/README.md)
+  - [FSQ](../configs/fsq/README.md)
+  - [VQ-KD](../configs/vqkd/README.md)
+  - [Cluster](../configs/cluster/README.md)
+  - [decoder](../configs/decoder/README.md) for both VQ-KD and Cluster
 - Proposal Networks generates image tokens for image synthesis.
-  - [AR](configs/ar/README.md)
+  - [AR](../configs/ar/README.md)

@@ -11,7 +11,7 @@ import todd
 import todd.runners.callbacks as trc
 import torch.distributed
 from todd.configs import PyConfig
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.patches.torch import get_rank, get_world_size
 from torch import nn
 

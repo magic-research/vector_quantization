@@ -4,7 +4,7 @@ from typing import Iterator
 
 from todd.configs import PyConfig
 from todd.datasets.access_layers import PILAccessLayer
-from todd.patches.py import DictAction
+from todd.patches.py_ import DictAction
 from todd.patches.torch import get_world_size
 
 from vq import VQRunnerRegistry

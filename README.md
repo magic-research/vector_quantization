@@ -12,7 +12,7 @@ This repository is the official implementation of "[Image Understanding Makes fo
 
 Image understanding (IU) and image generation (IG) have long been central to computer vision research. While many studies explore how IG models can aid IU, few investigate the reverse—**using IU models to enhance IG**.
 
-This work bridges this gap by introducing IU-based tokenizers in the AutoRegressive (AR) IG framework. Specifically, we evaluate the following tokenizers:
+This work bridges the gap by introducing IU-based tokenizers in the AutoRegressive (AR) IG framework. Specifically, we evaluate the following tokenizers:
 
 - [VQGAN](configs/vqgan/README.md)
 - [CVQ-VAE](configs/cvq_vae/README.md)
@@ -20,7 +20,7 @@ This work bridges this gap by introducing IU-based tokenizers in the AutoRegress
 - [VQ-KD](configs/vqkd/README.md)
 - [Cluster](configs/cluster/README.md)
 
-The VQ-KD and Cluster tokenizers leverage pretrained models such as CLIP, delivering superior results compared to traditional tokenizers. The following sections provice detailed instructions for training and evaluating these tokenizers.
+The VQ-KD and Cluster tokenizers leverage pretrained models such as CLIP, delivering superior results compared to traditional tokenizers. The following sections provice detailed instructions for training and validating these tokenizers.
 
 ## Preparation
 

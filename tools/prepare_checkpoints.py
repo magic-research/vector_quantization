@@ -28,6 +28,104 @@ def download_state_dict(url: str, path: pathlib.Path) -> None:
     )
 
 
+def pytorch_fid(args: argparse.Namespace) -> None:
+    root: pathlib.Path = args.root / 'pytorch-fid'
+    root.mkdir(parents=True, exist_ok=True)
+
+    download_state_dict(
+        f'{GITHUB}mseitzer/pytorch-fid/releases/download/'
+        'fid_weights/pt_inception-2015-12-05-6726825d.pth',
+        root / 'pt_inception.pth',
+    )
+
+
+def lpips(args: argparse.Namespace) -> None:
+    root: pathlib.Path = args.root / 'lpips'
+    root.mkdir(parents=True, exist_ok=True)
+
+    download_state_dict(
+        'https://heibox.uni-heidelberg.de/f/607503859c864bc1b30b/?dl=1',
+        root / 'vgg.pth',
+    )
+
+
+def torchvision(args: argparse.Namespace) -> None:
+    from torchvision import models
+
+    root: pathlib.Path = args.root / 'torch'
+    if not root.exists():
+        root.symlink_to(os.path.join(torch.hub.get_dir(), 'checkpoints'), True)
+
+    for w in args.weights:
+        weights: models.WeightsEnum = get_(models, w)
+        weights.get_state_dict()
+
+
+def clip(args: argparse.Namespace) -> None:
+    from clip import load
+
+    root: pathlib.Path = args.root / 'clip'
+    root.mkdir(parents=True, exist_ok=True)
+
+    for w in args.weights:
+        load(w, download_root=root)
+
+
+def dino(args: argparse.Namespace) -> None:
+    root: pathlib.Path = args.root / 'dino'
+    root.mkdir(parents=True, exist_ok=True)
+
+    download_state_dict(
+        'https://dl.fbaipublicfiles.com/dino/dino_vitbase16_pretrain/'
+        'dino_vitbase16_pretrain.pth',
+        root / 'vitbase16.pth',
+    )
+
+
+def mae(args: argparse.Namespace) -> None:
+    root: pathlib.Path = args.root / 'mae'
+    root.mkdir(parents=True, exist_ok=True)
+
+    download_state_dict(
+        'https://dl.fbaipublicfiles.com/mae/pretrain/'
+        'mae_pretrain_vit_base.pth',
+        root / 'mae_pretrain_vit_base.pth',
+    )
+
+
+def huggingface(args: argparse.Namespace) -> None:
+    root: pathlib.Path = args.root / 'huggingface'
+    root.mkdir(parents=True, exist_ok=True)
+
+    w: str
+    for w in args.weights:
+        dir_ = root / w
+        if dir_.exists():
+            continue
+        subprocess.run(  # nosec B603 B607
+            [
+                'git',
+                'clone',
+                f'https://huggingface.co/{w}',
+                str(dir_),
+            ],
+            check=True,
+            env=dict(os.environ, GIT_LFS_SKIP_SMUDGE='1'),
+        )
+        subprocess.run(  # nosec B603 B607
+            [
+                'git',
+                '-C',
+                str(dir_),
+                'lfs',
+                'pull',
+                '-I',
+                'model.safetensors',
+            ],
+            check=True,
+        )
+
+
 def taming_transformers(args: argparse.Namespace) -> None:
     # Mock pytorch_lightning to load the checkpoint
     sys.modules['pytorch_lightning'] = unittest.mock.Mock()
@@ -71,110 +169,13 @@ def beitv2(args: argparse.Namespace) -> None:
     )
 
 
-def dino(args: argparse.Namespace) -> None:
-    root: pathlib.Path = args.root / 'dino'
-    root.mkdir(parents=True, exist_ok=True)
-
-    download_state_dict(
-        'https://dl.fbaipublicfiles.com/dino/dino_vitbase16_pretrain/'
-        'dino_vitbase16_pretrain.pth',
-        root / 'vitbase16.pth',
-    )
-
-
-def lpips(args: argparse.Namespace) -> None:
-    root: pathlib.Path = args.root / 'lpips'
-    root.mkdir(parents=True, exist_ok=True)
-
-    download_state_dict(
-        'https://heibox.uni-heidelberg.de/f/607503859c864bc1b30b/?dl=1',
-        root / 'vgg.pth',
-    )
-
-
-def pytorch_fid(args: argparse.Namespace) -> None:
-    root: pathlib.Path = args.root / 'pytorch-fid'
-    root.mkdir(parents=True, exist_ok=True)
-
-    download_state_dict(
-        f'{GITHUB}mseitzer/pytorch-fid/releases/download/'
-        'fid_weights/pt_inception-2015-12-05-6726825d.pth',
-        root / 'pt_inception.pth',
-    )
-
-
-def mae(args: argparse.Namespace) -> None:
-    root: pathlib.Path = args.root / 'mae'
-    root.mkdir(parents=True, exist_ok=True)
-
-    download_state_dict(
-        'https://dl.fbaipublicfiles.com/mae/pretrain/'
-        'mae_pretrain_vit_base.pth',
-        root / 'mae_pretrain_vit_base.pth',
-    )
-
-
-def clip(args: argparse.Namespace) -> None:
-    from clip import load
-
-    root: pathlib.Path = args.root / 'clip'
-    root.mkdir(parents=True, exist_ok=True)
-
-    for w in args.weights:
-        load(w, download_root=root)
-
-
-def torchvision(args: argparse.Namespace) -> None:
-    from torchvision import models
-
-    root: pathlib.Path = args.root / 'torch'
-    if not root.exists():
-        root.symlink_to(os.path.join(torch.hub.get_dir(), 'checkpoints'), True)
-
-    for w in args.weights:
-        weights: models.WeightsEnum = get_(models, w)
-        weights.get_state_dict()
-
-
-def inception(args: argparse.Namespace) -> None:
-    # Inception weights ported to Pytorch from
-    # http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
-    torch.hub.load_state_dict_from_url(
-        f'{GITHUB}toshas/torch-fidelity/releases/download/v0.2.0/'
-        'weights-inception-2015-12-05-6726825d.pth',
-    )
-
-
-def huggingface(args: argparse.Namespace) -> None:
-    root: pathlib.Path = args.root / 'huggingface'
-    root.mkdir(parents=True, exist_ok=True)
-
-    w: str
-    for w in args.weights:
-        dir_ = root / w
-        if not dir_.exists():
-            subprocess.run(  # nosec B603 B607
-                [
-                    'git',
-                    'clone',
-                    'https://huggingface.co/gpt2-medium',
-                    str(dir_),
-                ],
-                check=True,
-                env=dict(os.environ, GIT_LFS_SKIP_SMUDGE='1'),
-            )
-            subprocess.run(  # nosec B603 B607
-                [
-                    'git',
-                    '-C',
-                    str(dir_),
-                    'lfs',
-                    'pull',
-                    '-I',
-                    'model.safetensors',
-                ],
-                check=True,
-            )
+# def inception(args: argparse.Namespace) -> None:
+#     # Inception weights ported to Pytorch from
+#     # http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
+#     torch.hub.load_state_dict_from_url(
+#         f'{GITHUB}toshas/torch-fidelity/releases/download/v0.2.0/'
+#         'weights-inception-2015-12-05-6726825d.pth',
+#     )
 
 
 def parse_args() -> argparse.Namespace:
@@ -185,19 +186,16 @@ def parse_args() -> argparse.Namespace:
         default=pathlib.Path('pretrained'),
     )
 
-    subparsers = parser.add_subparsers()
+    sub_parsers = parser.add_subparsers()
 
     def add_parser(f: Callable[..., Any]) -> argparse.ArgumentParser:
-        subparser = subparsers.add_parser(f.__name__)
+        subparser = sub_parsers.add_parser(f.__name__)
         subparser.set_defaults(func=f)
         return subparser
 
-    add_parser(taming_transformers)
-    add_parser(beitv2)
-    add_parser(dino)
-    add_parser(lpips)
     add_parser(pytorch_fid)
-    add_parser(mae)
+
+    add_parser(lpips)
 
     parser_clip = add_parser(clip)
     parser_clip.add_argument(
@@ -210,20 +208,24 @@ def parse_args() -> argparse.Namespace:
         ],
     )
 
+    add_parser(dino)
+
     parser_torchvision = add_parser(torchvision)
     parser_torchvision.add_argument(
         '--weights',
         nargs='+',
         default=[
             '.VGG16_Weights.DEFAULT',
-            '.Inception_V3_Weights.DEFAULT',
+            # '.Inception_V3_Weights.DEFAULT',
             '.ViT_B_16_Weights.DEFAULT',
-            '.ResNet50_Weights.DEFAULT',
+            # '.ResNet50_Weights.DEFAULT',
             # '.ConvNeXt_Base_Weights.DEFAULT',
         ],
     )
 
-    add_parser(inception)
+    add_parser(mae)
+
+    # add_parser(inception)
 
     parser_huggingface = add_parser(huggingface)
     parser_huggingface.add_argument(
@@ -233,6 +235,10 @@ def parse_args() -> argparse.Namespace:
             'gpt2-medium',
         ],
     )
+
+    add_parser(taming_transformers)
+
+    add_parser(beitv2)
 
     args = parser.parse_args()
     return args

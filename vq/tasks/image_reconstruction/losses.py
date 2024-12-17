@@ -130,19 +130,12 @@ class LPIPSLoss(
         self._features: list[torch.Tensor] = []
 
     def init_weights(self, config: todd.Config) -> bool:
-        config.setdefault('pretrained', 'pretrained/lpips/vgg.pth')
+        config.setdefault('pretrained', 'pretrained/lpips/vgg.pth.converted')
         state_dict: todd.utils.StateDict = todd.patches.torch.load(
             config.pretrained,
             'cpu',
             directory=Store.PRETRAINED,
         )
-        state_dict = {  # TODO: refactor into Converter
-            re.sub(
-                r'lin([0-4]).model.1.weight', 
-                lambda m: f'{m.group(1)}.weight', 
-                k,
-            ): v for k, v in state_dict.items()
-        }
         self._convs.load_state_dict(state_dict)
         return False
 

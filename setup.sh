@@ -19,3 +19,5 @@ pipenv run pip install openmim
 pipenv run mim install mmcv
 pipenv run pip install git+https://github.com/lvis-dataset/lvis-api.git@lvis_challenge_2021
 make install_todd
+
+pip install git+https://github.com/LutingWang/CLIP.git # TODO: remove this dependency
